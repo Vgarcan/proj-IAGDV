@@ -8,33 +8,33 @@
 <section class="hero-section" data-parallax-root>
   <div class="hero-image" data-parallax-layer data-speed="0.16" aria-hidden="true"></div>
   <div class="hero-grid" data-parallax-layer data-speed="0.06" aria-hidden="true"></div>
-  <div class="specimen specimen-a" data-parallax-layer data-speed="-0.11" aria-hidden="true"></div>
   <div class="container hero-content position-relative">
-    <div class="row align-items-end min-vh-100 py-5">
-      <div class="col-xl-9 col-lg-10 py-lg-5">
-        <div class="lab-clearance"><span class="batch-mark">DB–EDEN / 01</span><i></i> CONTROLLED LEARNING SERIES</div>
-        <p class="hero-kicker">DEV-BAKERY.COM PRESENTS</p>
-        <h1>Project<br><span>In-A-Gadda-Da-Vida</span></h1>
-        <p class="hero-copy">A practical laboratory for autonomous agents, artificial memory and simulated life. Build the digital organism from its first rule to measurable multi-agent behaviour.</p>
+    <div class="row align-items-center min-vh-100 py-5">
+      <div class="col-xl-8 col-lg-9 py-lg-5">
+        <div class="lab-clearance"><span class="batch-mark">EDEN / RESEARCH 01</span><i></i> AUTONOMOUS SYSTEMS LABORATORY</div>
+        <p class="hero-kicker">PROJECT IN-A-GADDA-DA-VIDA</p>
+        <h1>Build a world.<br><span>Then let it think.</span></h1>
+        <p class="hero-copy">A living simulation for studying autonomous agents, artificial memory and the boundary between a decision and a change to reality.</p>
         <div class="d-flex flex-wrap gap-3 mt-4">
-          <a class="btn btn-lab btn-lg" href="{% url 'guide:chapter-01' %}">Begin protocol <i class="bi bi-arrow-right"></i></a>
-          <a class="btn btn-outline-lab btn-lg" href="#mission">Review mission</a>
+          <a class="btn btn-lab btn-lg" href="{% url 'guide:chapter-01' %}">Enter the lab <i class="bi bi-arrow-up-right"></i></a>
+          <a class="btn btn-outline-lab btn-lg" href="#mission">Explore the research</a>
         </div>
         <div class="hero-metrics mt-5">
-          <div><small>PROTOCOLS</small><strong>09</strong></div>
-          <div><small>ENVIRONMENT</small><strong>60 × 60</strong></div>
-          <div><small>FORMAT</small><strong>STATIC GUIDE</strong></div>
+          <div><small>RESEARCH PROTOCOLS</small><strong>09</strong></div>
+          <div><small>SIMULATED WORLD</small><strong>60 × 60</strong></div>
+          <div><small>AUTONOMOUS AGENTS</small><strong>02</strong></div>
         </div>
       </div>
     </div>
   </div>
+  <div class="hero-caption" aria-hidden="true"><span>FIG. 01</span> / A WORLD UNDER OBSERVATION</div>
 </section>
 
 <section class="mission-section section-space" id="mission">
   <div class="container">
     <div class="row g-5 align-items-start">
-      <div class="col-lg-5"><p class="eyebrow">RESEARCH MISSION</p><h2>A world first.<br>An agent second.</h2></div>
-      <div class="col-lg-7"><p class="lead-copy">Adam and Eve will perceive, decide, use tools, exchange information and remember between sessions. Python remains the authority over reality; the language model may only propose an action.</p>
+      <div class="col-lg-5"><p class="eyebrow">01 / THE RESEARCH QUESTION</p><h2>A world first.<br>An agent second.</h2></div>
+      <div class="col-lg-7"><p class="lead-copy">Adam and Eve perceive, decide, use tools, exchange information and remember between sessions. Python remains the authority over reality; the language model can only propose an action.</p>
         <div class="row g-3 mt-3">
           <div class="col-sm-4"><div class="principle-mini"><span>01</span><b>Deterministic core</b><small>Rules stay testable without AI.</small></div></div>
           <div class="col-sm-4"><div class="principle-mini"><span>02</span><b>Visible decisions</b><small>Every important event is traceable.</small></div></div>
@@ -48,7 +48,7 @@
 <section class="workflow-section section-space" id="workflow">
   <div class="container">
     <div class="section-heading">
-      <p class="eyebrow">LEARNING WORKFLOW</p>
+      <p class="eyebrow">02 / EXPERIMENT SEQUENCE</p>
       <h2>From deterministic rules<br>to measurable behaviour.</h2>
       <p>Each stage adds one controlled capability. The simulation remains testable before intelligence, persistence or communication is introduced.</p>
     </div>
@@ -64,31 +64,35 @@
 
 <section class="architecture-section section-space" id="architecture">
   <div class="container">
-    <p class="eyebrow">SYSTEM MAP</p><h2>Separate responsibilities.<br>One consistent world.</h2>
+    <p class="eyebrow">03 / SYSTEM ANATOMY</p><h2>Separate responsibilities.<br>One consistent world.</h2>
     <p class="architecture-intro">The model proposes. Tools constrain. The simulation engine alone confirms a world mutation.</p>
     <div class="architecture-map mt-5" aria-label="System architecture and authority paths">
       <div class="architecture-lane">
-        <span class="lane-label">PRESENTATION</span>
-        <div class="architecture-node"><i class="bi bi-window"></i><b>Tkinter + Turtle</b><small>Requests actions and renders confirmed state</small></div>
-        <div class="architecture-arrow architecture-arrow-both"><span>intent / event</span></div>
-        <div class="architecture-node authority-node"><i class="bi bi-shield-check"></i><b>Simulation Engine</b><small>Validates rules and owns mutations</small></div>
+        <div class="lane-heading"><span>01 / PRESENTATION</span><small>Human input and observation</small></div>
+        <div class="lane-flow lane-flow-two">
+          <div class="architecture-node"><i class="bi bi-window" aria-hidden="true"></i><b>Tkinter + Turtle</b><small>Requests actions and renders confirmed state</small></div>
+          <div class="architecture-arrow architecture-arrow-both"><span>intent / event</span></div>
+          <div class="architecture-node authority-node"><i class="bi bi-shield-check" aria-hidden="true"></i><b>Simulation Engine</b><small>Validates rules and owns mutations</small></div>
+        </div>
       </div>
       <div class="architecture-lane">
-        <span class="lane-label">DECISION SUPPORT</span>
-        <div class="architecture-node"><i class="bi bi-person-workspace"></i><b>Agent Loop</b><small>Observes, decides and evaluates results</small></div>
-        <div class="architecture-arrow architecture-arrow-both"><span>prompt / proposal</span></div>
-        <div class="architecture-node"><i class="bi bi-cpu"></i><b>LiteLLM + Ollama</b><small>Returns an untrusted proposal</small></div>
+        <div class="lane-heading"><span>02 / DECISION SUPPORT</span><small>Interpretation without authority</small></div>
+        <div class="lane-flow lane-flow-two">
+          <div class="architecture-node"><i class="bi bi-person-workspace" aria-hidden="true"></i><b>Agent Loop</b><small>Observes, decides and evaluates results</small></div>
+          <div class="architecture-arrow architecture-arrow-both"><span>prompt / proposal</span></div>
+          <div class="architecture-node"><i class="bi bi-cpu" aria-hidden="true"></i><b>LiteLLM + Ollama</b><small>Returns an untrusted proposal</small></div>
+        </div>
       </div>
       <div class="architecture-lane authority-lane">
-        <span class="lane-label">AUTHORITY PATH</span>
-        <div class="authority-chain">
-          <div class="architecture-node"><i class="bi bi-person-workspace"></i><b>Agent Loop</b><small>Requests one named capability</small></div>
+        <div class="lane-heading"><span>03 / AUTHORITY PATH</span><small>Validated changes to the world</small></div>
+        <div class="lane-flow lane-flow-four">
+          <div class="architecture-node"><i class="bi bi-person-workspace" aria-hidden="true"></i><b>Agent Loop</b><small>Requests one named capability</small></div>
           <div class="architecture-arrow"><span>tool call</span></div>
-          <div class="architecture-node"><i class="bi bi-wrench-adjustable"></i><b>Tool Registry</b><small>Checks schema and permission</small></div>
+          <div class="architecture-node"><i class="bi bi-wrench-adjustable" aria-hidden="true"></i><b>Tool Registry</b><small>Checks schema and permission</small></div>
           <div class="architecture-arrow"><span>validated</span></div>
-          <div class="architecture-node authority-node"><i class="bi bi-shield-check"></i><b>Simulation Engine</b><small>Accepts or rejects the request</small></div>
+          <div class="architecture-node authority-node"><i class="bi bi-shield-check" aria-hidden="true"></i><b>Simulation Engine</b><small>Accepts or rejects the request</small></div>
           <div class="architecture-arrow"><span>world event</span></div>
-          <div class="architecture-node authority-node"><i class="bi bi-grid-3x3"></i><b>World State</b><small>Stores the confirmed result</small></div>
+          <div class="architecture-node authority-node"><i class="bi bi-grid-3x3" aria-hidden="true"></i><b>World State</b><small>Stores the confirmed result</small></div>
         </div>
       </div>
     </div>
@@ -97,7 +101,7 @@
 
 <section class="chapters-section section-space" id="chapters">
   <div class="container">
-    <div class="section-heading"><p class="eyebrow">LABORATORY MANUAL</p><h2>Nine hardcoded learning modules.</h2><p>Each chapter is a dedicated Django template with theory, mechanisms, examples, guided practice and a mastery checkpoint.</p></div>
+    <div class="section-heading"><p class="eyebrow">04 / FIELD MANUAL</p><h2>Nine protocols.<br>One living system.</h2><p>Move from the first world rule to a measurable society of agents. Each protocol pairs the theory with mechanisms, experiments and a checkpoint.</p></div>
     <div class="row g-3 mt-4">
       {% for item in guide_chapters %}
         <div class="col-md-6 col-lg-4">

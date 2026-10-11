@@ -12,7 +12,7 @@ class HomePageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Project In-A-Gadda-Da-Vida")
-        self.assertContains(response, "Nine hardcoded learning modules")
+        self.assertContains(response, "Nine protocols")
 
     def test_home_page_has_documented_workflow_without_fake_live_status(self):
         response = self.client.get(reverse("main:home"))
