@@ -1,0 +1,55 @@
+{% extends "guide/chapter_base.html" %}
+{% block level %}Agent architecture{% endblock %}
+{% block chapter_content %}
+<section class="learning-objectives"><h2>Learning outcomes</h2><ul><li>Differentiate agent, model and tool</li><li>Build an autonomous loop</li><li>Register tools explicitly</li><li>Validate arguments and permission</li><li>Return a standard ToolResult</li><li>Reconsider after failure</li></ul></section>
+
+<h2>1. Agent, model and tool are not synonyms</h2>
+<p>An <strong>agent</strong> owns a goal and repeatedly observes, decides, acts and evaluates. A <strong>model</strong> proposes a decision from context. A <strong>tool</strong> is a controlled capability implemented by Python. The model may ask to use a tool; it never becomes that tool.</p>
+<div class="protocol-strip" role="list" aria-label="Controlled agent execution loop"><div class="protocol-step" role="listitem"><span>01</span><b>Perceive</b><small>Build observation</small></div><div class="protocol-step" role="listitem"><span>02</span><b>Decide</b><small>Model proposal</small></div><div class="protocol-step" role="listitem"><span>03</span><b>Validate</b><small>Schema + permission</small></div><div class="protocol-step" role="listitem"><span>04</span><b>Execute</b><small>Python handler</small></div><div class="protocol-step" role="listitem"><span>05</span><b>Evaluate</b><small>Read ToolResult</small></div></div>
+
+<h2>2. Design the smallest useful tool catalogue</h2>
+<p>Begin with <code>observe</code>, <code>move</code> and <code>wait</code>. Later chapters add <code>drink</code>, <code>eat</code> and <code>talk</code>. A tool has two layers: a public schema available to the model and a private Python implementation that owns the real operation.</p>
+<div class="code-panel"><code>from typing import Literal
+from pydantic import BaseModel, ConfigDict
+
+class MoveArgs(BaseModel):
+    """One orthogonal grid step."""
+    model_config = ConfigDict(extra="forbid")
+    dx: Literal[-1, 0, 1]
+    dy: Literal[-1, 0, 1]
+
+def valid_orthogonal_step(dx: int, dy: int) -> bool:
+    """Reject diagonal movement and no-op movement."""
+    return abs(dx) + abs(dy) == 1
+
+assert valid_orthogonal_step(1, 0)
+assert not valid_orthogonal_step(1, 1)</code></div>
+<p>Type validation alone does not reject <code>(1, 1)</code> or <code>(0, 0)</code>. Domain rules complete the validation.</p>
+
+<h2>3. Build a controlled execution pipeline</h2>
+<ol><li>Confirm that the named tool is registered.</li><li>Confirm that the requesting agent is authorised.</li><li>Validate arguments against the schema.</li><li>Confirm that the referenced world revision is still current.</li><li>Ask the world whether the action is possible.</li><li>Execute the handler once and record the resulting event.</li></ol>
+<div class="lab-callout danger"><b>SECURITY BOUNDARY</b><p>Never run arbitrary model-generated code and never use unrestricted <code>getattr(world, model_selected_name)</code>. An explicit registry is an allowlist.</p></div>
+
+<h2>4. Return one standard result</h2>
+<p><code>ToolResult</code> should include success, tool name, request ID, agent ID, tick, reason and bounded result data. A rejected action is not an infrastructure crash; it is evidence the agent can use for a new decision.</p>
+<div class="code-panel"><code>TOOL_REGISTRY = {
+    "move": move_handler,
+    "wait": wait_handler,
+}
+
+def execute_tool(call: ToolCall, context: ToolContext) -> ToolResult:
+    """Validate every boundary before dispatching a handler."""
+    handler = TOOL_REGISTRY.get(call.name)
+    if handler is None:
+        return ToolResult.failure(call, reason="unknown_tool")
+    if not context.permissions.allows(call.agent_id, call.name):
+        return ToolResult.failure(call, reason="not_authorised")
+    return handler(call, context)</code></div>
+
+<h2>5. Tool calling through LiteLLM</h2>
+<p>Some compatible models can return native <code>tool_calls</code>; others can return a JSON object containing a name and arguments. In both cases our execution pipeline remains the same. Verify the capability of the exact local model instead of assuming that support in LiteLLM guarantees support in Ollama.</p>
+
+<h2>6. Guided laboratory</h2>
+<div class="practice-grid"><div class="practice-card"><span>EXPERIMENT A</span><h3>Manual call</h3><p>Execute one typed <code>move</code> without a model.</p></div><div class="practice-card"><span>EXPERIMENT B</span><h3>Registry and permission</h3><p>Reject unknown tools and an unauthorised agent.</p></div><div class="practice-card"><span>EXPERIMENT C</span><h3>Model proposal</h3><p>Parse a real tool call but keep execution separate.</p></div><div class="practice-card"><span>EXPERIMENT D</span><h3>Replanning</h3><p>Return a wall collision and let the agent choose again.</p></div></div>
+<section class="mastery-check"><h2>Protocol completion</h2><p>A valid tool may still be rejected by current world state. Every rejection leaves state unchanged, returns an explicit reason and can be correlated with the decision that caused it.</p></section>
+{% endblock %}

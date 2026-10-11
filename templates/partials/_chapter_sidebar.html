@@ -1,0 +1,13 @@
+<aside class="chapter-sidebar" aria-label="Guide chapters">
+  <div class="sidebar-sticky">
+    <p class="sidebar-label">RESEARCH PROTOCOLS</p>
+    <nav>
+      {% for item in guide_chapters %}
+        <a class="chapter-nav-link {% if item.number == chapter.number %}active{% endif %}" href="{% url item.url_name %}"{% if item.number == chapter.number %} aria-current="page"{% endif %}>
+          <span>{{ item.number }}</span>
+          <span><small>{{ item.phase }}</small>{{ item.title }}</span>
+        </a>
+      {% endfor %}
+    </nav>
+  </div>
+</aside>

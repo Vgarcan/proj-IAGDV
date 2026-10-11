@@ -1,0 +1,12 @@
+<nav class="chapter-pager" aria-label="Chapter navigation">
+  {% if previous_chapter %}
+    <a class="pager-link previous" href="{% url previous_chapter.url_name %}">
+      <small><i class="bi bi-arrow-left"></i> PREVIOUS PROTOCOL</small><strong>{{ previous_chapter.title }}</strong>
+    </a>
+  {% else %}<span></span>{% endif %}
+  {% if next_chapter %}
+    <a class="pager-link next" href="{% url next_chapter.url_name %}">
+      <small>NEXT PROTOCOL <i class="bi bi-arrow-right"></i></small><strong>{{ next_chapter.title }}</strong>
+    </a>
+  {% endif %}
+</nav>

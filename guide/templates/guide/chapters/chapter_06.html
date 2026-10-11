@@ -1,0 +1,63 @@
+{% extends "guide/chapter_base.html" %}
+{% block level %}Persistence + agent memory{% endblock %}
+{% block chapter_content %}
+<section class="learning-objectives"><h2>Learning outcomes</h2><ul><li>Separate persistence from learning</li><li>Classify memory types</li><li>Track provenance and time</li><li>Store memories in SQLite</li><li>Retrieve relevant context</li><li>Restore state safely</li></ul></section>
+
+<h2>1. What does it mean to remember?</h2>
+<p>Adam finds water at (7, 2), the program closes and the next session begins tomorrow. Ollama does not automatically retain that experience. The application must store it and deliberately retrieve it when it becomes relevant.</p>
+<ul><li><strong>Persistence</strong> means data survives process shutdown.</li><li><strong>Memory</strong> means an agent can retain and retrieve prior information.</li><li><strong>Observable learning</strong> means prior information changes later behaviour.</li></ul>
+<p>A successful SQLite insert proves persistence only. Demonstrating learning requires a behavioural comparison.</p>
+
+<h2>2. State, events and memory are different records</h2>
+<p>World state says what is true now. An event says what happened at a particular tick. A memory says what an agent retains from an observation, result, message or inference. A memory may be incomplete or outdated.</p>
+<div class="protocol-strip" role="list" aria-label="Memory retention and recall pipeline"><div class="protocol-step" role="listitem"><span>EVENT</span><b>Water observed</b><small>Tick 12, (7, 2)</small></div><div class="protocol-step" role="listitem"><span>POLICY</span><b>Worth retaining?</b><small>Importance rule</small></div><div class="protocol-step" role="listitem"><span>MEMORY</span><b>Episode stored</b><small>Source + time</small></div><div class="protocol-step" role="listitem"><span>RECALL</span><b>Relevant context</b><small>Selected, not dumped</small></div></div>
+
+<h3>Three useful memory classes</h3>
+<ul><li><strong>Working memory:</strong> current objective, recent observation and pending tool call.</li><li><strong>Episodic memory:</strong> a specific experience tied to a tick and source.</li><li><strong>Knowledge:</strong> information synthesised from multiple experiences.</li></ul>
+
+<h2>3. Preserve provenance and time</h2>
+<p>“I saw water” and “Eve told me there is water” are not equivalent evidence. Record a source such as <code>direct_observation</code>, <code>tool_result</code>, <code>agent_message</code> or <code>inference</code>. Keep the observed tick and, later, a confidence or validity field.</p>
+<div class="code-panel"><code>memory = {
+    "agent_id": "adam",
+    "kind": "episodic",
+    "content": "Observed water at (7, 2)",
+    "source": "direct_observation",
+    "observed_tick": 12,
+}</code></div>
+<div class="lab-callout warning"><b>HISTORICAL, NOT CURRENT</b><p>If the water disappears at tick 30, the tick-12 memory remains historically correct. Mark it stale or verify it; do not rewrite the past.</p></div>
+
+<h2>4. Create the first SQLite repository</h2>
+<div class="code-panel"><code>from pathlib import Path
+import sqlite3
+
+DB_PATH = Path("data/eden.db")
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+with sqlite3.connect(DB_PATH) as connection:
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS memories (
+            id INTEGER PRIMARY KEY,
+            agent_id TEXT NOT NULL,
+            observed_tick INTEGER NOT NULL,
+            kind TEXT NOT NULL,
+            content TEXT NOT NULL,
+            source TEXT NOT NULL
+        )
+    """)
+    connection.execute(
+        "INSERT INTO memories "
+        "(agent_id, observed_tick, kind, content, source) "
+        "VALUES (?, ?, ?, ?, ?)",
+        ("adam", 12, "episodic", "Water at (7, 2)", "direct_observation"),
+    )</code></div>
+<p>Use parameters, not string interpolation. Hide SQL behind a repository such as <code>MemoryRepository</code> so the agent does not own connection details.</p>
+
+<h2>5. Retrieve useful context</h2>
+<p>Do not place every stored memory in the prompt. Filter by agent, type, recency, location or keyword; apply a strict limit; then format a bounded context. Retrieval is part of application policy and must be testable without Ollama.</p>
+
+<h2>6. Snapshot the world separately</h2>
+<p>World restoration and agent memories have different authority. A snapshot serialises current world state and is restored through validation. Memories remain historical records. Keep SQLite work off the Tkinter thread and use short transactions.</p>
+
+<div class="practice-grid"><div class="practice-card"><span>EXPERIMENT A</span><h3>Persist without AI</h3><p>Insert and query one episode using sqlite3.</p></div><div class="practice-card"><span>EXPERIMENT B</span><h3>Build the repository</h3><p>Move SQL behind typed methods.</p></div><div class="practice-card"><span>EXPERIMENT C</span><h3>Select context</h3><p>Retrieve only Adam's three most relevant memories.</p></div><div class="practice-card"><span>EXPERIMENT D</span><h3>Restart</h3><p>Restore a world snapshot and preserve its separate memories.</p></div></div>
+<section class="mastery-check"><h2>Protocol completion</h2><p>After restart, Adam can recover a sourced memory of water and use it in a later decision. You can explain why this demonstrates persistence and memory, but not necessarily general learning.</p></section>
+{% endblock %}

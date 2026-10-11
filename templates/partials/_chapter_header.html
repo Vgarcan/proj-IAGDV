@@ -1,0 +1,12 @@
+<header class="chapter-header">
+  <div class="chapter-header-grid" aria-hidden="true"></div>
+  <div class="container position-relative">
+    <p class="chapter-code">PROTOCOL {{ chapter.number }} / {{ chapter.phase }}</p>
+    <h1>{{ chapter.title }}</h1>
+    <div class="chapter-meta">
+      <span><i class="bi bi-clock"></i> {% block duration %}1–2 sessions{% endblock %}</span>
+      <span><i class="bi bi-bar-chart"></i> {% block level %}Foundation{% endblock %}</span>
+      <span><i class="bi bi-check2-circle"></i> Hardcoded learning module</span>
+    </div>
+  </div>
+</header>

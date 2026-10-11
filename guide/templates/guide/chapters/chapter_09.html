@@ -1,0 +1,48 @@
+{% extends "guide/chapter_base.html" %}
+{% block level %}Experimental artificial life{% endblock %}
+{% block chapter_content %}
+<section class="learning-objectives"><h2>Learning outcomes</h2><ul><li>Form a testable hypothesis</li><li>Control experimental variables</li><li>Use deterministic seeds</li><li>Choose meaningful metrics</li><li>Compare against a baseline</li><li>Interpret without overclaiming</li></ul></section>
+
+<h2>1. Turn a working program into a laboratory</h2>
+<p>The system can now represent a world, advance ticks, consult Ollama, execute tools, retain memories and deliver messages. The next goal is not simply to watch Adam move; it is to ask a question that evidence can answer.</p>
+<p>This artificial-life simulation does not create living beings or prove consciousness. It creates observable behaviour from rules, goals, memory and probabilistic decisions.</p>
+
+<h2>2. Define scenarios with consequences</h2>
+<p>Start with 10 × 10 before scaling to 60 × 60. Water, food and obstacles create environmental pressure. Thirst, hunger and energy change through deterministic rules. Movement, eating and drinking need explicit costs; free actions make strategy difficult to compare.</p>
+<p>Useful scenarios include known versus unknown water, disappearing resources, two agents competing for food and Eve receiving incorrect information.</p>
+
+<h2>3. Be precise about autonomy and emergence</h2>
+<p>An autonomous agent observes, decides when deliberation is needed, uses a tool and evaluates the result without continuous user commands. Autonomy still operates within strict permissions.</p>
+<p>An emergent pattern is not directly scripted as a sequence—for example, agents sharing water locations and consequently exploring less. One striking run is not evidence of general learning.</p>
+<div class="lab-callout"><b>THREE LEVELS</b><p>Following rules, adapting with a memory and learning a general strategy are different claims. Each requires stronger evidence than the previous one.</p></div>
+
+<h2>4. Design one controlled experiment</h2>
+<p>Every experiment records a question, hypothesis, changed variable, controlled conditions, baseline, metrics, number of runs, termination rule and known limitations.</p>
+<div class="protocol-strip" role="list" aria-label="Controlled experiment workflow"><div class="protocol-step" role="listitem"><span>01</span><b>Hypothesis</b><small>Will memory help?</small></div><div class="protocol-step" role="listitem"><span>02</span><b>Configure</b><small>Same map + seed</small></div><div class="protocol-step" role="listitem"><span>03</span><b>Execute</b><small>Multiple runs</small></div><div class="protocol-step" role="listitem"><span>04</span><b>Compare</b><small>Baseline vs treatment</small></div><div class="protocol-step" role="listitem"><span>05</span><b>Interpret</b><small>Evidence + limits</small></div></div>
+<p>Example hypothesis: enabling memory retrieval reduces ticks to first drink. Change memory only. Hold map, positions, rules, action budget, model and generation settings constant.</p>
+
+<h2>5. Reproducibility and random seeds</h2>
+<div class="code-panel"><code>import random
+
+def resource_positions(seed: int, count: int = 4) -> list[tuple[int, int]]:
+    """Create a reproducible deterministic resource layout."""
+    generator = random.Random(seed)
+    return [
+        (generator.randrange(10), generator.randrange(10))
+        for _ in range(count)
+    ]
+
+assert resource_positions(42) == resource_positions(42)</code></div>
+<p>A seed makes the deterministic part reproducible. It does not guarantee identical LLM responses: model version, temperature, concurrency and inference implementation also matter.</p>
+
+<h2>6. Measure both behaviour and infrastructure</h2>
+<h3>World and agent metrics</h3><ul><li>Ticks and steps until first drink.</li><li>Percentage of runs that reach the goal.</li><li>Invalid or rejected tool calls.</li><li>Useful memories retrieved and messages acted upon.</li><li>Explored cells, energy consumed and resources shared.</li></ul>
+<h3>Technical metrics</h3><ul><li>Model calls, latency and timeout rate.</li><li>Tokens or estimated local inference cost.</li><li>Queue depth, database duration and UI responsiveness.</li><li>Failures grouped by component and error code.</li></ul>
+
+<h2>7. Compare with a baseline</h2>
+<p>A deterministic <code>RuleBasedAgent</code> is valuable: it shows whether the LLM actually improves the target outcome. Compare no memory versus memory, no communication versus communication and scripted policy versus model proposal. Change one variable at a time.</p>
+
+<h2>8. Guided research programme</h2>
+<div class="practice-grid"><div class="practice-card"><span>EXPERIMENT A</span><h3>Controlled scenario</h3><p>Fix map, needs, action budget and termination tick.</p></div><div class="practice-card"><span>EXPERIMENT B</span><h3>Rule baseline</h3><p>Record success without an LLM.</p></div><div class="practice-card"><span>EXPERIMENT C</span><h3>Memory A/B</h3><p>Run multiple seeds with memory off and on.</p></div><div class="practice-card"><span>EXPERIMENT D</span><h3>Message quality</h3><p>Compare correct, stale and false reports.</p></div></div>
+<section class="mastery-check"><h2>Research completion</h2><p>You can state exactly what changed, reproduce the deterministic conditions, compare several runs against a baseline and separate measured results from interpretation. The next experiment should emerge from evidence, not from adding complexity for its own sake.</p></section>
+{% endblock %}

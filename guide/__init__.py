@@ -1,0 +1,1 @@
+"""Hardcoded learning-guide application."""

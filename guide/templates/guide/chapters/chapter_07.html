@@ -1,0 +1,57 @@
+{% extends "guide/chapter_base.html" %}
+{% block level %}Multi-agent systems{% endblock %}
+{% block chapter_content %}
+<section class="learning-objectives"><h2>Learning outcomes</h2><ul><li>Keep agents independent</li><li>Define typed messages</li><li>Use inboxes and a message bus</li><li>Deliver asynchronously</li><li>Deduplicate messages</li><li>Turn messages into sourced memories</li></ul></section>
+
+<h2>1. Communication is not shared consciousness</h2>
+<p>Eve enters the garden with her own state, goals, tools and memory. Adam may tell her that he found water at (7, 2), but he cannot write directly into her memory or force her next action. Eve may trust the report, question it, verify it or ignore it.</p>
+<p>Communication transports information; it does not guarantee cooperation or truth.</p>
+
+<h2>2. Agent, bus and inbox</h2>
+<ul><li><strong>Agent:</strong> produces and consumes messages while preserving its own decision process.</li><li><strong>talk tool:</strong> requests a message send through the usual validation pipeline.</li><li><strong>MessagingService:</strong> validates sender, recipient, length, limits and format.</li><li><strong>Inbox:</strong> stores pending messages for one recipient.</li><li><strong>MemoryService:</strong> decides whether a received message becomes a retained episode.</li></ul>
+<div class="protocol-strip" role="list" aria-label="Agent message delivery pipeline"><div class="protocol-step" role="listitem"><span>ADAM</span><b>talk()</b><small>Request to communicate</small></div><div class="protocol-step" role="listitem"><span>BUS</span><b>Validate + queue</b><small>ID and delivery tick</small></div><div class="protocol-step" role="listitem"><span>EVE</span><b>Receive</b><small>Inbox item</small></div><div class="protocol-step" role="listitem"><span>EVE</span><b>Interpret</b><small>Believe, doubt or ignore</small></div></div>
+
+<h2>3. Define AgentMessage</h2>
+<div class="code-panel"><code>from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field
+
+class AgentMessage(BaseModel):
+    """A typed, traceable message between garden agents."""
+    model_config = ConfigDict(extra="forbid")
+
+    message_id: str = Field(min_length=1)
+    sender_id: str = Field(min_length=1)
+    recipient_id: str = Field(min_length=1)
+    kind: Literal["inform", "question", "reply"]
+    content: str = Field(min_length=1, max_length=300)
+    sent_tick: int = Field(ge=0)
+    deliver_tick: int = Field(ge=0)
+    reply_to: str | None = None</code></div>
+<p>Pydantic checks the structure. The application must still verify the authenticated sender, a known recipient, a unique message ID and a valid delivery policy. System-generated IDs and ticks must not be trusted to model output.</p>
+
+<h2>4. Treat successful sending precisely</h2>
+<p>A successful <code>talk()</code> result means “accepted and queued”. It does not mean delivered, read, remembered, believed or acted upon. Represent those transitions as separate events.</p>
+<div class="lab-callout"><b>AGENT BOUNDARY</b><p>Adam can share the content “Water at (7, 2)”. Eve alone decides whether to store a memory with source <code>agent_message</code>.</p></div>
+
+<h2>5. Use queues for independent timing</h2>
+<p>Adam may be waiting for Ollama while Eve acts. A queue allows a sender and recipient to operate at different times. For a learning prototype, <code>asyncio.Queue</code> can model delivery. Durable delivery later requires persistence because an in-memory queue disappears when the program stops.</p>
+<div class="code-panel"><code>import asyncio
+
+class Inbox:
+    """Async inbox owned by one agent."""
+
+    def __init__(self) -> None:
+        self._messages: asyncio.Queue[AgentMessage] = asyncio.Queue()
+
+    async def deliver(self, message: AgentMessage) -> None:
+        await self._messages.put(message)
+
+    async def receive(self) -> AgentMessage:
+        return await self._messages.get()</code></div>
+
+<h2>6. Failure, duplicates and traceability</h2>
+<p>Reject unknown recipients and oversized content without producing partial side effects. Keep processed message IDs so a retry cannot create the same memory twice. Record queued, delivered, consumed and rejected events, each correlated with the originating tool request.</p>
+
+<div class="practice-grid"><div class="practice-card"><span>EXPERIMENT A</span><h3>Manual delivery</h3><p>Send one typed message without any LLM.</p></div><div class="practice-card"><span>EXPERIMENT B</span><h3>Permissions</h3><p>Prevent Adam from sending under Eve's identity.</p></div><div class="practice-card"><span>EXPERIMENT C</span><h3>Tick delay</h3><p>Queue at tick 12 and deliver at tick 13.</p></div><div class="practice-card"><span>EXPERIMENT D</span><h3>Interpretation</h3><p>Store a message-derived memory with explicit provenance.</p></div></div>
+<section class="mastery-check"><h2>Protocol completion</h2><p>Eve receives Adam's report without any code mutating her private memory directly. Duplicate delivery is harmless, every transition is traceable and the message can remain untrusted until verified.</p></section>
+{% endblock %}

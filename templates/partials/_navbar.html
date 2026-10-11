@@ -1,0 +1,27 @@
+<header class="site-header">
+  <nav class="navbar navbar-expand-lg container py-3" aria-label="Primary navigation">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'main:home' %}">
+      <span class="brand-mark"><i class="bi bi-hexagon-fill"></i></span>
+      <span class="brand-copy"><b>DEV·BAKERY</b><small>EDEN RESEARCH DIVISION</small></span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#site-nav" aria-controls="site-nav" aria-expanded="false" aria-label="Open navigation">
+      <i class="bi bi-list"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="site-nav">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+        <li class="nav-item"><a class="nav-link" href="{% url 'main:home' %}#mission">Mission</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'main:home' %}#workflow">Workflow</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'main:home' %}#architecture">Architecture</a></li>
+        <li class="nav-item dropdown">
+          <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Chapters</button>
+          <ul class="dropdown-menu dropdown-menu-end chapter-dropdown">
+            {% for item in guide_chapters %}
+              <li><a class="dropdown-item" href="{% url item.url_name %}"><span>{{ item.number }}</span>{{ item.title }}</a></li>
+            {% endfor %}
+          </ul>
+        </li>
+        <li class="nav-item"><a class="btn btn-lab ms-lg-2" href="{% url 'guide:chapter-01' %}">Start protocol <i class="bi bi-arrow-right"></i></a></li>
+      </ul>
+    </div>
+  </nav>
+</header>

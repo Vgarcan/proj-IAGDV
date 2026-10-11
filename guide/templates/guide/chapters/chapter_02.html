@@ -1,0 +1,53 @@
+{% extends "guide/chapter_base.html" %}
+{% block level %}Python + desktop UI{% endblock %}
+{% block chapter_content %}
+<section class="learning-objectives"><h2>Learning outcomes</h2><ul><li>Create Tkinter widgets and callbacks</li><li>Embed Turtle in a Canvas</li><li>Translate logical coordinates</li><li>Render confirmed state only</li><li>Understand the Tk event loop</li><li>Organise presentation code</li></ul></section>
+
+<h2>1. Two libraries, two roles</h2>
+<p>Tkinter owns the application window, controls, labels, keyboard events and main event loop. Turtle provides a convenient visual actor with a position, orientation and shape. They work together, but neither should own the simulation rules.</p>
+<p>The world says “Adam is at (4, 4)”. The presentation layer converts that cell into screen coordinates and asks Turtle to draw there. If a move is rejected, the visual marker must remain where the confirmed state says it is.</p>
+
+<div class="protocol-strip" role="list" aria-label="Presentation request and render flow"><div class="protocol-step" role="listitem"><span>01</span><b>User input</b><small>Key or button</small></div><div class="protocol-step" role="listitem"><span>02</span><b>Controller</b><small>Builds an intent</small></div><div class="protocol-step" role="listitem"><span>03</span><b>Engine</b><small>Validates rules</small></div><div class="protocol-step" role="listitem"><span>04</span><b>Renderer</b><small>Draws the result</small></div></div>
+
+<h2>2. Build the application shell</h2>
+<ul><li><code>tk.Tk()</code> creates the main window.</li><li><code>ttk.Frame</code> groups controls and layout responsibilities.</li><li><code>tk.Canvas</code> becomes the drawing surface.</li><li><code>ttk.Label</code> displays tick, position and status.</li><li><code>ttk.Button(command=...)</code> registers a callback.</li><li><code>root.mainloop()</code> processes UI events and should normally run once.</li></ul>
+<div class="lab-callout warning"><b>ENVIRONMENT NOTE</b><p>Tkinter and Turtle are part of Python's standard library; they are not normally installed with pip. Some Linux distributions require a system Tk package, and a headless server cannot display the window directly.</p></div>
+
+<h2>3. Embed Turtle explicitly</h2>
+<p>A plain <code>turtle.Turtle()</code> may create its own global window. In an application, use <code>TurtleScreen(canvas)</code> and <code>RawTurtle(screen)</code> so Tkinter remains the explicit owner of the UI.</p>
+<div class="code-panel"><code>import tkinter as tk
+from tkinter import ttk
+from turtle import RawTurtle, TurtleScreen
+
+WORLD_SIZE = 10
+CELL_SIZE = 40
+
+def world_to_turtle(x: int, y: int) -> tuple[float, float]:
+    """Return the centre of a logical cell in Turtle coordinates."""
+    px = (x + 0.5 - WORLD_SIZE / 2) * CELL_SIZE
+    py = (WORLD_SIZE / 2 - y - 0.5) * CELL_SIZE
+    return px, py
+
+root = tk.Tk()
+canvas = tk.Canvas(root, width=400, height=400, bg="#eef5f0")
+canvas.pack()
+
+screen = TurtleScreen(canvas)
+screen.tracer(0)
+adam = RawTurtle(screen)
+adam.penup()
+adam.goto(*world_to_turtle(4, 4))
+screen.update()
+root.mainloop()</code></div>
+
+<h2>4. Reconcile coordinate systems</h2>
+<p>The domain uses top-left origin and positive y downwards. Turtle normally centres the origin and treats positive y as upwards. The conversion function is presentation logic. Keep it outside <code>World</code> so grid tests never depend on pixels.</p>
+<div class="protocol-strip" role="list" aria-label="Coordinate transformation"><div class="protocol-step" role="listitem"><span>DOMAIN</span><b>(0, 0) top-left</b><small>10 × 10 cells</small></div><div class="protocol-step" role="listitem"><span>TRANSFORM</span><b>Cell → centre</b><small>Offset and invert y</small></div><div class="protocol-step" role="listitem"><span>VIEW</span><b>(0, 0) centred</b><small>Positive y upwards</small></div></div>
+
+<h2>5. Respect the event loop</h2>
+<p>A callback must finish quickly so Tkinter can process repainting, keyboard input and window events. Avoid <code>while True</code>, <code>time.sleep()</code> and direct Ollama calls inside a button handler. Use <code>root.after()</code> for scheduled UI work; Chapter 03 introduces the async worker for slow operations.</p>
+
+<h2>6. Guided laboratory</h2>
+<div class="practice-grid"><div class="practice-card"><span>EXPERIMENT A</span><h3>Render the grid</h3><p>Draw a 10 × 10 board and keep logical dimensions separate from pixel size.</p></div><div class="practice-card"><span>EXPERIMENT B</span><h3>Add controls</h3><p>Four buttons produce movement intentions; none updates Turtle directly.</p></div><div class="practice-card"><span>EXPERIMENT C</span><h3>Display state</h3><p>Show tick, position and the latest confirmed event.</p></div><div class="practice-card"><span>EXPERIMENT D</span><h3>Test the boundary</h3><p>Attempt an invalid move and verify that World and Turtle remain aligned.</p></div></div>
+<section class="mastery-check"><h2>Protocol completion</h2><p>The window can open and close cleanly, Adam appears in the correct logical cell, an invalid action leaves the marker in place and the domain module imports no GUI library.</p></section>
+{% endblock %}

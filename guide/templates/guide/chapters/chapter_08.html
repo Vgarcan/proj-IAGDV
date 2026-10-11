@@ -1,0 +1,56 @@
+{% extends "guide/chapter_base.html" %}
+{% block level %}Reliability engineering{% endblock %}
+{% block chapter_content %}
+<section class="learning-objectives"><h2>Learning outcomes</h2><ul><li>Define module boundaries</li><li>Version data contracts</li><li>Correlate a full decision</li><li>Classify errors and retries</li><li>Test without Ollama</li><li>Design idempotent effects</li></ul></section>
+
+<h2>1. Standards remove invisible assumptions</h2>
+<p>The garden now observes, consults a model, uses tools, stores memories and transports messages. Without stable contracts, one module eventually returns a slightly different dictionary and failures become difficult to locate. Standardisation means agreeing on inputs, outputs and failure rules; it does not mean building a large framework.</p>
+
+<h2>2. Keep contracts narrow</h2>
+<p>The central contracts are <code>Observation</code>, <code>Decision</code>, <code>ToolCall</code>, <code>ToolResult</code>, <code>WorldEvent</code>, <code>AgentMessage</code> and <code>MemoryItem</code>. Each expresses one responsibility. Avoid a universal dictionary that contains every possible field.</p>
+<div class="protocol-strip" role="list" aria-label="Contract chain from observation to world event"><div class="protocol-step" role="listitem"><span>OBSERVATION</span><b>Permitted facts</b><small>Agent's view</small></div><div class="protocol-step" role="listitem"><span>DECISION</span><b>Validated intent</b><small>Model proposal</small></div><div class="protocol-step" role="listitem"><span>TOOL CALL</span><b>Named request</b><small>ID + arguments</small></div><div class="protocol-step" role="listitem"><span>TOOL RESULT</span><b>Accepted or rejected</b><small>Explicit outcome</small></div><div class="protocol-step" role="listitem"><span>WORLD EVENT</span><b>Confirmed effect</b><small>Engine authority</small></div></div>
+
+<h2>3. Version structure and world state separately</h2>
+<p><code>schema_version</code> changes when a data format changes. <code>world_revision</code> changes when the world mutates and lets the engine reject a decision based on stale information. A tick represents simulated time but may not uniquely identify a mutation.</p>
+<div class="code-panel"><code>from typing import Any, Literal
+from pydantic import BaseModel, ConfigDict, Field
+
+class WorldEvent(BaseModel):
+    """An immutable event created by the simulation engine."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal[1] = 1
+    event_id: str = Field(min_length=1)
+    request_id: str = Field(min_length=1)
+    actor_id: str = Field(min_length=1)
+    tick: int = Field(ge=0)
+    kind: Literal["MOVE_OK", "MOVE_REJECTED"]
+    payload: dict[str, Any]</code></div>
+
+<h2>4. Trace one decision end to end</h2>
+<p>A <code>request_id</code> relates observation, model call, decision, tool request and result. The confirmed world change receives its own <code>event_id</code>. Structured logs should capture timestamp, tick, agent, request, component, operation, outcome, duration and error code.</p>
+<div class="lab-callout warning"><b>OBSERVABILITY LIMIT</b><p>Record evidence needed to investigate behaviour, but never secrets. Large private reasoning traces are not required to prove that a tool was called and validated.</p></div>
+
+<h2>5. Timeouts and retries are policy decisions</h2>
+<p>Separate invalid input, rejected action, model timeout, network failure, database error and internal bug. Not every failure should be retried. A malformed contract needs correction; a temporary connection may justify bounded exponential backoff.</p>
+<p>A retry must not repeat a confirmed side effect. Store or recognise request IDs so <code>move(req-123)</code> cannot move twice after a lost response.</p>
+
+<h2>6. Test the agent without a live model</h2>
+<div class="code-panel"><code>class FakeModel:
+    """Return deterministic decisions for integration tests."""
+
+    async def decide(self, observation: Observation) -> Decision:
+        return Decision(
+            goal="Reach visible water",
+            action="move",
+            arguments={"dx": 1, "dy": 0},
+            reason="Water is east",
+        )</code></div>
+<p>A fake proves orchestration, tool validation and event creation without network latency or probabilistic output. Keep a smaller set of live-model tests for adapter compatibility.</p>
+
+<h2>7. LiteLLM and future MCP integration</h2>
+<p>LiteLLM standardises model access. It does not replace internal contracts or permissions. MCP may later expose tools across process boundaries, but the internal tool service should remain valid without it. Add an integration only when it solves a concrete boundary.</p>
+
+<div class="practice-grid"><div class="practice-card"><span>EXPERIMENT A</span><h3>Freeze a contract</h3><p>Reject unknown fields and accidental mutation.</p></div><div class="practice-card"><span>EXPERIMENT B</span><h3>Correlate IDs</h3><p>Follow one request through every layer.</p></div><div class="practice-card"><span>EXPERIMENT C</span><h3>Use FakeModel</h3><p>Test the whole loop without Ollama.</p></div><div class="practice-card"><span>EXPERIMENT D</span><h3>Retry safely</h3><p>Repeat a request ID and prove one effect.</p></div></div>
+<section class="mastery-check"><h2>Protocol completion</h2><p>You can replace Ollama with FakeModel without changing world rules, diagnose one failed decision from structured evidence and retry transient work without duplicating a confirmed action.</p></section>
+{% endblock %}

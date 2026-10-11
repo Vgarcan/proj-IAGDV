@@ -1,0 +1,60 @@
+{% extends "guide/chapter_base.html" %}
+{% block level %}Python intermediate{% endblock %}
+{% block chapter_content %}
+<section class="learning-objectives"><h2>Learning outcomes</h2><ul><li>Explain two event loops</li><li>Schedule work with root.after</li><li>Use async and await correctly</li><li>Communicate through queues</li><li>Keep Tkinter on its thread</li><li>Shut workers down safely</li></ul></section>
+
+<h2>1. Why interfaces freeze</h2>
+<p>If Adam moves while a five-second decision request runs inside a Tkinter callback, the same thread cannot repaint the window or process the Pause button. The UI appears frozen because its event loop is occupied.</p>
+<p>A world tick, a user event and a slow model request are different types of work. They should progress independently and communicate through explicit messages.</p>
+
+<h2>2. Tkinter and asyncio are separate schedulers</h2>
+<h3>Tkinter's main loop</h3><p><code>root.mainloop()</code> handles widgets, paint events and callbacks. Treat the Tk thread as the only place that modifies Tkinter or Turtle objects.</p>
+<h3>asyncio's task loop</h3><p><code>asyncio</code> coordinates coroutines that yield while waiting. <code>await</code> does not automatically create a thread, and concurrency is not the same as parallel CPU execution.</p>
+<div class="lab-callout danger"><b>DO NOT PATCH THE FREEZE</b><p>Calling <code>root.update()</code> repeatedly introduces re-entrant UI work. Calling <code>asyncio.run()</code> from every button creates and destroys loops. Design one stable boundary instead.</p></div>
+
+<h2>3. First scheduler: root.after()</h2>
+<div class="code-panel"><code>import tkinter as tk
+
+root = tk.Tk()
+label = tk.Label(root, text="Tick: 0")
+label.pack(padx=24, pady=24)
+tick_count = 0
+
+def tick() -> None:
+    """Advance the display and return control immediately."""
+    global tick_count
+    tick_count += 1
+    label.config(text=f"Tick: {tick_count}")
+    root.after(200, tick)
+
+root.after(200, tick)
+root.mainloop()</code></div>
+<p><code>root.after()</code> registers future work and returns. It does not sleep. The actual interval includes the time spent by other callbacks, so it is a scheduler rather than a precision clock.</p>
+
+<h2>4. Concurrent waiting with asyncio</h2>
+<div class="code-panel"><code>import asyncio
+
+async def operation(name: str) -> str:
+    """Simulate a three-second I/O operation."""
+    await asyncio.sleep(3)
+    return f"{name} completed"
+
+async def main() -> None:
+    results = await asyncio.gather(operation("A"), operation("B"))
+    print(results)
+
+asyncio.run(main())</code></div>
+<p>The two waits overlap because each coroutine yields control. CPU-heavy work would still block this loop and may require a process or specialised executor.</p>
+
+<h2>5. The safe bridge</h2>
+<div class="protocol-strip" role="list" aria-label="Safe UI and async worker bridge"><div class="protocol-step" role="listitem"><span>TK THREAD</span><b>Submit request</b><small>ID + tick snapshot</small></div><div class="protocol-step" role="listitem"><span>QUEUE</span><b>Transfer work</b><small>Thread-safe boundary</small></div><div class="protocol-step" role="listitem"><span>ASYNC WORKER</span><b>Await operation</b><small>No widgets touched</small></div><div class="protocol-step" role="listitem"><span>TK THREAD</span><b>Poll result</b><small>root.after()</small></div></div>
+<p>The worker receives plain data and returns plain data. The UI periodically drains a result queue and decides whether the result is still relevant. A request created for tick 12 may be stale when it returns at tick 20.</p>
+
+<h2>6. Three independent rhythms</h2>
+<ul><li><strong>Simulation rhythm:</strong> when rules and needs advance.</li><li><strong>Render rhythm:</strong> when the screen reflects the latest state.</li><li><strong>Deliberation rhythm:</strong> when an agent needs an expensive decision.</li></ul>
+<p>Do not call the LLM on every visual frame or every tick. Deliberation should have a reason: a new goal, failed action, important observation or expired plan.</p>
+
+<h2>7. Guided laboratory</h2>
+<div class="practice-grid"><div class="practice-card"><span>EXPERIMENT A</span><h3>Create the freeze</h3><p>Use a deliberate sleep once and observe the blocked window.</p></div><div class="practice-card"><span>EXPERIMENT B</span><h3>Build the clock</h3><p>Replace the loop with a self-scheduling <code>root.after</code> callback.</p></div><div class="practice-card"><span>EXPERIMENT C</span><h3>Test coroutines</h3><p>Run concurrent console tasks before integrating the UI.</p></div><div class="practice-card"><span>EXPERIMENT D</span><h3>Bridge with queues</h3><p>Return a fake slow decision without touching a widget from the worker.</p></div></div>
+<section class="mastery-check"><h2>Protocol completion</h2><p>A five-second operation does not stop the window moving or the Pause control responding. Closing the application cancels or completes pending work and terminates the worker cleanly.</p></section>
+{% endblock %}

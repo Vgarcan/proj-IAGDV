@@ -1,0 +1,62 @@
+{% extends "guide/chapter_base.html" %}
+{% block level %}Python intermediate + local AI{% endblock %}
+{% block chapter_content %}
+<section class="learning-objectives"><h2>Learning outcomes</h2><ul><li>Define each AI component</li><li>Connect to local Ollama</li><li>Call a model through LiteLLM</li><li>Validate structured decisions</li><li>Handle timeout and malformed output</li><li>Keep AI outside the domain</li></ul></section>
+
+<h2>1. Assign the correct role to every component</h2>
+<p>Ollama serves the local language model over HTTP. LiteLLM gives the Python application a relatively consistent provider interface. Our adapter transforms a garden observation into model messages and receives a response. A validator converts that response into a known <code>Decision</code>. The simulation engine remains the only component allowed to apply a world change.</p>
+<div class="protocol-strip" role="list" aria-label="Local model decision pipeline"><div class="protocol-step" role="listitem"><span>WORLD</span><b>Observation</b><small>Authorised facts</small></div><div class="protocol-step" role="listitem"><span>ADAPTER</span><b>LiteLLM request</b><small>Prompt + configuration</small></div><div class="protocol-step" role="listitem"><span>OLLAMA</span><b>Model response</b><small>Untrusted proposal</small></div><div class="protocol-step" role="listitem"><span>VALIDATOR</span><b>Decision contract</b><small>Known structure</small></div><div class="protocol-step" role="listitem"><span>ENGINE</span><b>Accept or reject</b><small>World authority</small></div></div>
+<p>LiteLLM is not the agent, memory or orchestrator. Ollama does not create autonomy merely by running a model. Those behaviours belong to our application.</p>
+
+<h2>2. Prepare the local service</h2>
+<p>First decide where Python and Ollama run. <code>localhost</code> always means the current machine or container. When both run together, the default API is usually <code>http://localhost:11434</code>. Across two devices, use a trusted private network and protect the service rather than exposing an unauthenticated endpoint to the Internet.</p>
+<div class="code-panel"><code># On the Ollama host
+ollama list
+ollama pull qwen2.5:3b
+
+# From the machine running Python
+curl http://localhost:11434/api/tags
+
+# In the project virtual environment
+python -m pip install litellm pydantic</code></div>
+
+<h2>3. Make the first isolated request</h2>
+<div class="code-panel"><code>from litellm import completion
+
+response = completion(
+    model="ollama_chat/qwen2.5:3b",
+    api_base="http://localhost:11434",
+    messages=[
+        {"role": "system", "content": "You are Adam in a virtual garden."},
+        {"role": "user", "content": "You are thirsty. What would you seek?"},
+    ],
+    temperature=0.2,
+    timeout=30,
+)
+
+print(response.choices[0].message.content)</code></div>
+<p>Run this in the console before involving Tkinter. It proves network, model name and adapter configuration separately from UI concurrency.</p>
+
+<h2>4. Design a bounded observation</h2>
+<p>Do not dump the whole world into every prompt. Provide the agent identity, tick, visible resources, current needs, current goal and permitted actions. The observation is a filtered view created by Python, not arbitrary access to internal state.</p>
+<div class="lab-callout"><b>OBSERVATION CONTRACT</b><p>Example: Adam, tick 12, position (4, 4), thirst 8/10, visible water at (7, 2), allowed actions: move, wait. The model needs enough evidence to propose; it does not need the entire database.</p></div>
+
+<h2>5. Parse a structured decision</h2>
+<div class="code-panel"><code>from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field
+
+class Decision(BaseModel):
+    """A model proposal; validation does not execute it."""
+    model_config = ConfigDict(extra="forbid")
+
+    goal: str = Field(min_length=1, max_length=120)
+    action: Literal["move", "wait"]
+    arguments: dict
+    reason: str = Field(min_length=1, max_length=180)</code></div>
+<p>Schema validation proves shape, not truth. A valid <code>move</code> request can still target a wall, refer to stale state or exceed the agent's permissions. The engine will decide later.</p>
+
+<h2>6. Async, failure and observability</h2>
+<p>Use LiteLLM's async interface inside the established worker. Apply timeouts and return a typed failure instead of silently inventing a decision. Record model name, request ID, latency, outcome and error class; never log credentials or unnecessary private content.</p>
+<div class="practice-grid"><div class="practice-card"><span>EXPERIMENT A</span><h3>Verify Ollama</h3><p>Confirm the exact model and HTTP endpoint independently.</p></div><div class="practice-card"><span>EXPERIMENT B</span><h3>Validate output</h3><p>Parse one good JSON response and reject extra fields.</p></div><div class="practice-card"><span>EXPERIMENT C</span><h3>Test async</h3><p>Return the decision without blocking Tkinter.</p></div><div class="practice-card"><span>EXPERIMENT D</span><h3>Break it safely</h3><p>Stop Ollama, force a timeout and send malformed JSON.</p></div></div>
+<section class="mastery-check"><h2>Protocol completion</h2><p>You can change the configured model without changing the agent or world code. An unavailable model produces a visible, bounded error and never causes an action to execute.</p></section>
+{% endblock %}

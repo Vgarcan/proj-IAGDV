@@ -1,0 +1,70 @@
+{% extends "guide/chapter_base.html" %}
+{% block level %}Python foundation{% endblock %}
+{% block chapter_content %}
+<section class="learning-objectives">
+  <h2>Learning outcomes</h2>
+  <ul><li>Separate state from rules</li><li>Distinguish intent from result</li><li>Validate grid coordinates</li><li>Assign clear responsibilities</li><li>Model discrete simulation time</li><li>Test an invalid action</li></ul>
+</section>
+
+<h2>1. Begin with reality, not intelligence</h2>
+<p>Project In-A-Gadda-Da-Vida begins with a 60 × 60 garden containing paths, obstacles, food and water. Adam starts at a known position with simulated needs, but he does not yet know the entire map. Eve will arrive later. The inhabitants may request actions; they never rewrite the laws of the world.</p>
+<p>For the first experiment, reduce the garden to 10 × 10 and control Adam manually. Fewer moving parts make architectural mistakes visible. Once the domain behaves correctly, the same rules can serve a keyboard controller, a local language model or a deterministic algorithm.</p>
+
+<h2>2. State, rules, intentions and events</h2>
+<h3>State: what is true now?</h3>
+<p>State is a snapshot: the grid dimensions, Adam's position, the current tick, available resources and current needs. It is neither a command nor an explanation.</p>
+<h3>Rules: which changes are legal?</h3>
+<p>Rules apply regardless of what an agent wants. They stop an inhabitant leaving the map, crossing an obstacle, drinking where no water exists or spending energy that is not available. Python owns these rules.</p>
+<h3>Intent: what does an actor want?</h3>
+<p>An intent is a request such as “move east”. It is not proof that Adam moved. The engine must validate the candidate destination against current reality.</p>
+<h3>Event: what actually happened?</h3>
+<p>An event records a confirmed outcome: a successful movement or a rejected attempt. Events support the UI, debugging, persistence and later behavioural analysis.</p>
+
+<div class="protocol-strip" role="list" aria-label="Movement protocol">
+  <div class="protocol-step" role="listitem"><span>01 / STATE</span><b>Adam at (4, 4)</b><small>Current world truth</small></div>
+  <div class="protocol-step" role="listitem"><span>02 / INTENT</span><b>Move east</b><small>Requested change</small></div>
+  <div class="protocol-step" role="listitem"><span>03 / VALIDATE</span><b>Check (5, 4)</b><small>Bounds and collision</small></div>
+  <div class="protocol-step" role="listitem"><span>04 / EVENT</span><b>MOVE_OK</b><small>Confirmed result</small></div>
+</div>
+
+<h2>3. Responsibility map</h2>
+<ul>
+  <li><strong>World</strong> owns terrain, dimensions, resources and inhabitant state.</li>
+  <li><strong>SimulationEngine</strong> advances ticks and applies valid actions.</li>
+  <li><strong>Agent</strong> owns needs and later chooses goals and intentions.</li>
+  <li><strong>Presentation</strong> displays confirmed state; it does not decide whether a wall is passable.</li>
+  <li><strong>AI adapter</strong> obtains a proposal from LiteLLM/Ollama; it cannot mutate the world.</li>
+  <li><strong>Memory</strong> stores and retrieves historical information; it is not physical truth.</li>
+</ul>
+<div class="lab-callout"><b>ARCHITECTURE CHECK</b><p>If Turtle is replaced tomorrow, movement rules should not change. If Ollama is offline, the engine should still advance a tick.</p></div>
+
+<h2>4. Coordinates and simulation time</h2>
+<p>A logical cell uses <code>(x, y)</code>. In this guide, <code>(0, 0)</code> is the top-left cell; x increases to the right and y increases downwards. A 10 × 10 world therefore accepts indices from 0 through 9. Screen pixels belong to the presentation layer and may use a different origin.</p>
+<p>A <strong>tick</strong> is one discrete world step. It is not necessarily one real second and it does not imply one LLM request. World updates, visual refreshes and agent deliberations will eventually operate at different rates.</p>
+
+<h2>5. First Python experiment</h2>
+<div class="code-panel"><code>from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Position:
+    """A logical cell in the garden."""
+    x: int
+    y: int
+
+def is_inside(position: Position, width: int, height: int) -> bool:
+    """Validate domain bounds without consulting the GUI."""
+    return 0 &lt;= position.x &lt; width and 0 &lt;= position.y &lt; height
+
+assert is_inside(Position(4, 4), width=10, height=10)
+assert not is_inside(Position(10, 5), width=10, height=10)</code></div>
+<p>A frozen dataclass makes a position an explicit value. Movement creates a candidate position instead of silently mutating the old one. A standalone validation function is easy to test without Tkinter, Ollama or a database.</p>
+
+<h2>6. Guided laboratory</h2>
+<div class="practice-grid">
+  <div class="practice-card"><span>EXPERIMENT A</span><h3>Represent the world</h3><p>Create <code>World(width, height, adam_position)</code> using dataclasses.</p></div>
+  <div class="practice-card"><span>EXPERIMENT B</span><h3>Build a candidate</h3><p>Write <code>move_request(position, dx, dy)</code> without mutating World.</p></div>
+  <div class="practice-card"><span>EXPERIMENT C</span><h3>Apply the rule</h3><p>Update Adam only when the candidate is inside the grid.</p></div>
+  <div class="practice-card"><span>EXPERIMENT D</span><h3>Prove rejection</h3><p>Show that moving west from (0, 0) leaves the state unchanged.</p></div>
+</div>
+<section class="mastery-check"><h2>Protocol completion</h2><p>You are ready to continue when you can explain who owns every value, why an intention is not a result and how one test proves that an invalid movement cannot alter the world.</p></section>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Project In-A-Gadda-Da-Vida: a practical laboratory for autonomous agents and artificial life.">
+    <title>{% block title %}Project In-A-Gadda-Da-Vida{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{% static 'css/site.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body class="{% block body_class %}{% endblock %}">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    {% include "partials/_navbar.html" %}
+    <main id="main-content">{% block content %}{% endblock %}</main>
+    {% include "partials/_footer.html" %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/site.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>
